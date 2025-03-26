@@ -22,7 +22,7 @@ app.post('/webhook', (req, res) => {
 });
 
 const sendTelegramMessage = (chatId, text) => {
-    fetch(`${TELEGRAM_API_URL}/sendMessage?chat_id=${chatId}&text=${text}&reply_markup={"inline_keyboard":[[{"text":"Open Mini App","web_app":{"url":"https://<YOUR_SERVER_URL>/hello"}}]]}`)
+    fetch(`${TELEGRAM_API_URL}/sendMessage?chat_id=${chatId}&text=${text}&reply_markup={"inline_keyboard":[[{"text":"Open Mini App","web_app":{"url":"${process.env.HOST}/hello"}}]]}`)
         .then(response => response.json())
         .catch(err => console.error('Error sending message:', err));
 };
