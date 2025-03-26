@@ -27,26 +27,10 @@ app.post('/webhook', async (req, res) => {
     res.sendStatus(200);
 });
 
-const sendTelegramMessage = async (chatId, text) => {
-    try {
-        const fetch = (await import('node-fetch')).default;
-        const url = `${TELEGRAM_API_URL}/sendMessage`;
-        const payload = {
-            chat_id: chatId,
-            text: text,
-            reply_markup: {
-                inline_keyboard: [[{ text: "Open Mini App", web_app: { url: `${process.env.HOST}/hello` } }]]
-            }
-        };
-
-        await fetch(url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-        });
-    } catch (err) {
-        console.error('Error sending message:', err);
-    }
+const sendTelegramMessage = (chatId, text) => {
+    fetch(`${TELEGRAM_API_URL}/sendMessage?chat_id=${chatId}&text=${text}&reply_markup={"inline_keyboard":[[{"text":"Open Mini App","web_app":{"url":"${process.env.HOST}/hello"}}]]}`)
+        .then(response => response.json())
+        .catch(err => console.error('Error sending message:', err));
 };
 
 app.get('/hello', (req, res) => {
