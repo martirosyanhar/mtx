@@ -1,39 +1,58 @@
-const fetch = require('node-fetch');
-const express = require('express');
+import express from 'express';
+import path from 'path';
+import dotenv from 'dotenv';
+import { fileURLToPath } from 'url';
+
+dotenv.config();
+
 const app = express();
-const path = require('path');
-const TELEGRAM_API_URL = 'https://api.telegram.org/bot<YOUR_BOT_API_TOKEN>'; // Replace with your bot's API token
+const TELEGRAM_API_URL = `https://api.telegram.org/bot${process.env.BOT_API_TOKEN}`;
 const PORT = process.env.PORT || 3000;
-require('dotenv').config();
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
-app.use(express.static(path.join(__dirname, 'public')));  // Serve static files (Mini App)
+app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.json()); // Middleware для парсинга JSON
 
-app.post('/webhook', (req, res) => {
+app.post('/webhook', async (req, res) => {
     const message = req.body.message;
     if (message && message.text) {
         const chatId = message.chat.id;
         const text = message.text.toLowerCase();
 
         if (text === '/start') {
-            sendTelegramMessage(chatId, 'Welcome to the Mini App! Click the button below to open the app.');
+            await sendTelegramMessage(chatId, 'Welcome to the Mini App! Click the button below to open the app.');
         }
     }
-    res.send();
+    res.sendStatus(200);
 });
 
-const sendTelegramMessage = (chatId, text) => {
-    fetch(`${TELEGRAM_API_URL}/sendMessage?chat_id=${chatId}&text=${text}&reply_markup={"inline_keyboard":[[{"text":"Open Mini App","web_app":{"url":"${process.env.HOST}/hello"}}]]}`)
-        .then(response => response.json())
-        .catch(err => console.error('Error sending message:', err));
+const sendTelegramMessage = async (chatId, text) => {
+    try {
+        const fetch = (await import('node-fetch')).default;
+        const url = `${TELEGRAM_API_URL}/sendMessage`;
+        const payload = {
+            chat_id: chatId,
+            text: text,
+            reply_markup: {
+                inline_keyboard: [[{ text: "Open Mini App", web_app: { url: `${process.env.HOST}/hello` } }]]
+            }
+        };
+
+        await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+    } catch (err) {
+        console.error('Error sending message:', err);
+    }
 };
 
-// Define route to serve the Mini App
 app.get('/hello', (req, res) => {
-    console.log(process.env.HOST);
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// Start the express server
 app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
 });
